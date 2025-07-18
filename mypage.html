@@ -7,59 +7,71 @@
   <style>
     body {
       font-family: "Helvetica Neue", Arial, sans-serif;
-      background: #e9f0f7;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 0;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      margin: 0;
-      padding: 0;
     }
     .container {
       background: white;
-      padding: 40px 50px;
+      padding: 32px;
       border-radius: 12px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-      width: 360px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 480px;
       text-align: center;
     }
     h1 {
-      color: #2c3e50;
-      margin-bottom: 24px;
-      font-weight: 700;
+      margin-bottom: 16px;
+      color: #333;
     }
-    p {
-      color: #34495e;
-      font-size: 1.1rem;
-      margin-bottom: 36px;
+    .info {
+      text-align: left;
+      margin-bottom: 24px;
+    }
+    .info p {
+      margin: 8px 0;
+      color: #555;
+      font-size: 0.95rem;
     }
     button {
       background-color: #3498db;
       color: white;
       border: none;
       border-radius: 8px;
-      padding: 14px 0;
-      width: 100%;
-      font-size: 1.1rem;
+      padding: 12px 20px;
+      font-size: 1rem;
       cursor: pointer;
+      margin: 6px;
       transition: background-color 0.3s ease;
-      font-weight: 600;
     }
     button:hover {
       background-color: #2980b9;
+    }
+    button.delete {
+      background-color: #e74c3c;
+    }
+    button.delete:hover {
+      background-color: #c0392b;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>マイページへようこそ！</h1>
-    <p>ログインに成功しました。</p>
+    <h1>マイページ</h1>
+    <div class="info" id="userInfo">
+      <p>読み込み中...</p>
+    </div>
     <button id="logout">ログアウト</button>
+    <button id="delete" class="delete">アカウント削除</button>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+    import { getAuth, signOut, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCBaWx8XWkZ4hByEvk861p1zP4AI73h2B0",
@@ -67,17 +79,54 @@
       projectId: "login-56835",
       storageBucket: "login-56835.appspot.com",
       messagingSenderId: "966452989756",
-      appId: "1:966452989756:web:fa814f6e74bb0cbc3dd839",
-      measurementId: "G-9RBJHKQL7Y"
+      appId: "1:966452989756:web:fa814f6e74bb0cbc3dd839"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
+    const userInfo = document.getElementById("userInfo");
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const providerId = user.providerData[0]?.providerId;
+        const loginMethod = providerId === "google.com" ? "Google" : "メール/パスワード";
+        const email = user.email || "(なし)";
+        const createdAt = new Date(user.metadata.creationTime).toLocaleString("ja-JP");
+        const displayName = user.displayName || "(未設定)";
+        const uid = user.uid;
+        const pageURL = `https://nekoyukkuri.github.io/mypage.html`;
+
+        userInfo.innerHTML = `
+          <p><strong>ログイン手段:</strong> ${loginMethod}</p>
+          <p><strong>メールアドレス:</strong> ${email}</p>
+          <p><strong>ハンドル名:</strong> ${displayName}</p>
+          <p><strong>アカウント作成日:</strong> ${createdAt}</p>
+          <p><strong>マイページURL:</strong> <a href="${pageURL}" target="_blank">${pageURL}</a></p>
+        `;
+      } else {
+        location.href = "index.html";
+      }
+    });
+
     document.getElementById("logout").addEventListener("click", () => {
       signOut(auth).then(() => {
-        window.location.href = "index.html";
+        location.href = "index.html";
       });
+    });
+
+    document.getElementById("delete").addEventListener("click", () => {
+      if (confirm("本当にアカウントを削除しますか？この操作は元に戻せません。")) {
+        const user = auth.currentUser;
+        if (user) {
+          deleteUser(user).then(() => {
+            alert("アカウントを削除しました。");
+            location.href = "index.html";
+          }).catch((error) => {
+            alert("削除に失敗しました。再ログインが必要かもしれません。");
+          });
+        }
+      }
     });
   </script>
 </body>
