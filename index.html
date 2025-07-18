@@ -86,7 +86,7 @@
       <h2>メールアドレスでログイン／新規登録</h2>
       <form id="email-login-form">
         <input type="email" id="email" placeholder="メールアドレス" required />
-        <input type="password" id="password" placeholder="パスワード" required />
+        <input type="password" id="password" placeholder="パスワード（6文字以上）" minlength="6" required />
         <button type="submit" id="email-login-btn">ログイン / 新規登録</button>
       </form>
       <p id="email-login-msg"></p>
@@ -98,68 +98,78 @@
     </div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import {
-      getAuth,
-      signInWithPopup,
-      GoogleAuthProvider,
-      signInWithEmailAndPassword,
-      createUserWithEmailAndPassword
-    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+  import {
+    getAuth,
+    signInWithPopup,
+    GoogleAuthProvider,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword
+  } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCBaWx8XWkZ4hByEvk861p1zP4AI73h2B0",
-      authDomain: "login-56835.firebaseapp.com",
-      projectId: "login-56835",
-      storageBucket: "login-56835.appspot.com",
-      messagingSenderId: "966452989756",
-      appId: "1:966452989756:web:fa814f6e74bb0cbc3dd839"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyCBaWx8XWkZ4hByEvk861p1zP4AI73h2B0",
+    authDomain: "login-56835.firebaseapp.com",
+    projectId: "login-56835",
+    storageBucket: "login-56835.appspot.com",
+    messagingSenderId: "966452989756",
+    appId: "1:966452989756:web:fa814f6e74bb0cbc3dd839"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
 
-    // Googleログイン
-    document.getElementById("google-login").addEventListener("click", () => {
-      signInWithPopup(auth, provider)
-        .then(result => {
-          console.log("Googleログイン成功", result.user);
-          window.location.href = "mypage.html";
-        })
-        .catch(error => {
-          alert("Googleログインに失敗しました: " + error.message);
-        });
-    });
-
-    // メールログイン・新規登録
-    document.getElementById("email-login-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-      const msg = document.getElementById("email-login-msg");
-      msg.textContent = "";
-
-      try {
-        // まずログインを試みる
-        await signInWithEmailAndPassword(auth, email, password);
+  // Googleログイン
+  document.getElementById("google-login").addEventListener("click", () => {
+    signInWithPopup(auth, provider)
+      .then(result => {
+        console.log("Googleログイン成功", result.user);
         window.location.href = "mypage.html";
-      } catch (loginError) {
-        if (loginError.code === "auth/user-not-found") {
-          // ユーザーが存在しないので新規登録を試みる
-          try {
-            await createUserWithEmailAndPassword(auth, email, password);
-            window.location.href = "mypage.html";
-          } catch (signupError) {
-            msg.textContent = "新規登録に失敗しました: " + signupError.message;
-          }
-        } else {
-          msg.textContent = "ログインに失敗しました: " + loginError.message;
+      })
+      .catch(error => {
+        alert("Googleログインに失敗しました: " + error.message);
+      });
+  });
+
+  // メールログイン・新規登録
+  document.getElementById("email-login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const msg = document.getElementById("email-login-msg");
+    msg.textContent = "";
+
+    if(password.length < 6) {
+      msg.textContent = "パスワードは6文字以上で入力してください。";
+      return;
+    }
+
+    try {
+      // まずログインを試みる
+      await signInWithEmailAndPassword(auth, email, password);
+      window.location.href = "mypage.html";
+    } catch (loginError) {
+      if (loginError.code === "auth/user-not-found") {
+        // ユーザーが存在しないので新規登録を試みる
+        try {
+          await createUserWithEmailAndPassword(auth, email, password);
+          window.location.href = "mypage.html";
+        } catch (signupError) {
+          console.error("新規登録エラー:", signupError);
+          msg.textContent = "新規登録に失敗しました: " + signupError.message;
         }
+      } else if(loginError.code === "auth/wrong-password") {
+        msg.textContent = "パスワードが間違っています。";
+      } else if(loginError.code === "auth/invalid-email") {
+        msg.textContent = "メールアドレスの形式が正しくありません。";
+      } else {
+        msg.textContent = "ログインに失敗しました: " + loginError.message;
       }
-    });
-  </script>
+    }
+  });
+</script>
 </body>
 </html>
