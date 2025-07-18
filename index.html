@@ -138,6 +138,18 @@
       window.location.href = "mypage.html";
     }
   });
+
+  // Enterキーでログイン処理
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      if (email && password) {
+        document.getElementById("email-login").click();
+      }
+    }
+  });
 </script>
+
 </body>
 </html>
