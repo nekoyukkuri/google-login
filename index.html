@@ -36,39 +36,60 @@
     color: #555;
     margin-bottom: 15px;
   }
-  .coming-soon {
-    background: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeeba;
-    padding: 10px 15px;
+  input[type="email"],
+  input[type="password"] {
+    width: 100%;
+    padding: 8px;
+    font-size: 1rem;
+    margin-bottom: 8px;
     border-radius: 6px;
-    font-weight: 600;
-    text-align: center;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
   }
-  #google-login {
-    background-color: #4285F4;
-    color: white;
-    border: none;
+  button {
     width: 100%;
     padding: 12px;
     font-size: 1rem;
     border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
     font-weight: 600;
+    border: none;
+  }
+  #google-login {
+    background-color: #4285F4;
+    color: white;
+    transition: background-color 0.3s ease;
   }
   #google-login:hover {
     background-color: #357ae8;
+  }
+  #email-login-btn {
+    background-color: #4caf50;
+    color: white;
+    margin-top: 8px;
+  }
+  #email-login-btn:hover {
+    background-color: #449d48;
+  }
+  #email-login-msg {
+    color: red;
+    margin-top: 8px;
+    min-height: 1.2em;
   }
 </style>
 </head>
 <body>
   <div class="container">
     <h1>ログイン</h1>
-    
+
     <div class="section">
-      <h2>メールアドレスでログイン</h2>
-      <div class="coming-soon">メールアドレスログインは現在実装中です</div>
+      <h2>メールアドレスでログイン／新規登録</h2>
+      <form id="email-login-form">
+        <input type="email" id="email" placeholder="メールアドレス" required />
+        <input type="password" id="password" placeholder="パスワード" required />
+        <button type="submit" id="email-login-btn">ログイン / 新規登録</button>
+      </form>
+      <p id="email-login-msg"></p>
     </div>
 
     <div class="section">
@@ -77,34 +98,68 @@
     </div>
   </div>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-  import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import {
+      getAuth,
+      signInWithPopup,
+      GoogleAuthProvider,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword
+    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCBaWx8XWkZ4hByEvk861p1zP4AI73h2B0",
-    authDomain: "login-56835.firebaseapp.com",
-    projectId: "login-56835",
-    storageBucket: "login-56835.appspot.com",
-    messagingSenderId: "966452989756",
-    appId: "1:966452989756:web:fa814f6e74bb0cbc3dd839",
-    measurementId: "G-9RBJHKQL7Y"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyCBaWx8XWkZ4hByEvk861p1zP4AI73h2B0",
+      authDomain: "login-56835.firebaseapp.com",
+      projectId: "login-56835",
+      storageBucket: "login-56835.appspot.com",
+      messagingSenderId: "966452989756",
+      appId: "1:966452989756:web:fa814f6e74bb0cbc3dd839"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const provider = new GoogleAuthProvider();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
 
-  document.getElementById("google-login").addEventListener("click", () => {
-    signInWithPopup(auth, provider)
-      .then(result => {
-        console.log("Googleログイン成功", result.user);
+    // Googleログイン
+    document.getElementById("google-login").addEventListener("click", () => {
+      signInWithPopup(auth, provider)
+        .then(result => {
+          console.log("Googleログイン成功", result.user);
+          window.location.href = "mypage.html";
+        })
+        .catch(error => {
+          alert("Googleログインに失敗しました: " + error.message);
+        });
+    });
+
+    // メールログイン・新規登録
+    document.getElementById("email-login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const msg = document.getElementById("email-login-msg");
+      msg.textContent = "";
+
+      try {
+        // まずログインを試みる
+        await signInWithEmailAndPassword(auth, email, password);
         window.location.href = "mypage.html";
-      })
-      .catch(error => {
-        alert("Googleログインに失敗しました: " + error.message);
-      });
-  });
-</script>
+      } catch (loginError) {
+        if (loginError.code === "auth/user-not-found") {
+          // ユーザーが存在しないので新規登録を試みる
+          try {
+            await createUserWithEmailAndPassword(auth, email, password);
+            window.location.href = "mypage.html";
+          } catch (signupError) {
+            msg.textContent = "新規登録に失敗しました: " + signupError.message;
+          }
+        } else {
+          msg.textContent = "ログインに失敗しました: " + loginError.message;
+        }
+      }
+    });
+  </script>
 </body>
 </html>
