@@ -69,65 +69,65 @@
     <button id="delete" class="delete">アカウント削除</button>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getAuth, signOut, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+  import { getAuth, signOut, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCBaWx8XWkZ4hByEvk861p1zP4AI73h2B0",
-      authDomain: "login-56835.firebaseapp.com",
-      projectId: "login-56835",
-      storageBucket: "login-56835.appspot.com",
-      messagingSenderId: "966452989756",
-      appId: "1:966452989756:web:fa814f6e74bb0cbc3dd839"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyCBaWx8XWkZ4hByEvk861p1zP4AI73h2B0",
+    authDomain: "login-56835.firebaseapp.com",
+    projectId: "login-56835",
+    storageBucket: "login-56835.appspot.com",
+    messagingSenderId: "966452989756",
+    appId: "1:966452989756:web:fa814f6e74bb0cbc3dd839"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
 
-    const userInfo = document.getElementById("userInfo");
+  const userInfo = document.getElementById("userInfo");
 
-    onAuthStateChanged(auth, (user) => {
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      const providerId = user.providerData[0]?.providerId;
+      const loginMethod = providerId === "google.com" ? "Google" : "メール/パスワード";
+      const email = user.email || "(なし)";
+      const createdAt = new Date(user.metadata.creationTime).toLocaleString("ja-JP");
+      const displayName = user.displayName || "(未設定)";
+      const uid = user.uid;
+      const pageURL = window.location.href;
+
+      userInfo.innerHTML = `
+        <p><strong>ログイン手段:</strong> ${loginMethod}</p>
+        <p><strong>メールアドレス:</strong> ${email}</p>
+        <p><strong>ハンドル名:</strong> ${displayName}</p>
+        <p><strong>アカウント作成日:</strong> ${createdAt}</p>
+        <p><strong>マイページURL:</strong> <a href="${pageURL}" target="_blank">${pageURL}</a></p>
+      `;
+    } else {
+      location.href = "index.html";
+    }
+  });
+
+  document.getElementById("logout").addEventListener("click", () => {
+    signOut(auth).then(() => {
+      location.href = "index.html";
+    });
+  });
+
+  document.getElementById("delete").addEventListener("click", () => {
+    if (confirm("本当にアカウントを削除しますか？この操作は元に戻せません。")) {
+      const user = auth.currentUser;
       if (user) {
-        const providerId = user.providerData[0]?.providerId;
-        const loginMethod = providerId === "google.com" ? "Google" : "メール/パスワード";
-        const email = user.email || "(なし)";
-        const createdAt = new Date(user.metadata.creationTime).toLocaleString("ja-JP");
-        const displayName = user.displayName || "(未設定)";
-        const uid = user.uid;
-        const pageURL = `https://nekoyukkuri.github.io/mypage.html`;
-
-        userInfo.innerHTML = `
-          <p><strong>ログイン手段:</strong> ${loginMethod}</p>
-          <p><strong>メールアドレス:</strong> ${email}</p>
-          <p><strong>ハンドル名:</strong> ${displayName}</p>
-          <p><strong>アカウント作成日:</strong> ${createdAt}</p>
-          <p><strong>マイページURL:</strong> <a href="${pageURL}" target="_blank">${pageURL}</a></p>
-        `;
-      } else {
-        location.href = "index.html";
+        deleteUser(user).then(() => {
+          alert("アカウントを削除しました。");
+          location.href = "index.html";
+        }).catch((error) => {
+          alert("削除に失敗しました。再ログインが必要かもしれません。");
+        });
       }
-    });
-
-    document.getElementById("logout").addEventListener("click", () => {
-      signOut(auth).then(() => {
-        location.href = "index.html";
-      });
-    });
-
-    document.getElementById("delete").addEventListener("click", () => {
-      if (confirm("本当にアカウントを削除しますか？この操作は元に戻せません。")) {
-        const user = auth.currentUser;
-        if (user) {
-          deleteUser(user).then(() => {
-            alert("アカウントを削除しました。");
-            location.href = "index.html";
-          }).catch((error) => {
-            alert("削除に失敗しました。再ログインが必要かもしれません。");
-          });
-        }
-      }
-    });
-  </script>
+    }
+  });
+</script>
 </body>
 </html>
