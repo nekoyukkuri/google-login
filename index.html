@@ -28,71 +28,58 @@
     font-weight: 700;
     text-align: center;
   }
-  label {
-    display: block;
-    margin-top: 15px;
-    font-weight: 600;
+  .section {
+    margin-bottom: 30px;
+  }
+  .section h2 {
+    font-size: 1.1rem;
     color: #555;
+    margin-bottom: 15px;
   }
-  input {
-    width: 100%;
-    padding: 10px 12px;
-    margin-top: 6px;
+  .coming-soon {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+    padding: 10px 15px;
     border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
   }
-  button {
-    background-color: #3498db;
+  #google-login {
+    background-color: #4285F4;
     color: white;
     border: none;
     width: 100%;
     padding: 12px;
-    margin-top: 25px;
     font-size: 1rem;
     border-radius: 6px;
     cursor: pointer;
+    transition: background-color 0.3s ease;
     font-weight: 600;
-  }
-  button:hover {
-    background-color: #2980b9;
-  }
-  #google-login {
-    background-color: #4285F4;
-    margin-top: 15px;
   }
   #google-login:hover {
     background-color: #357ae8;
-  }
-  .message {
-    margin-top: 20px;
-    text-align: center;
-    color: #e74c3c;
-    font-weight: 600;
   }
 </style>
 </head>
 <body>
   <div class="container">
-    <h1>ログイン / 新規登録</h1>
-    <label for="email">メールアドレス</label>
-    <input type="email" id="email" placeholder="example@mail.com" />
-    <label for="password">パスワード</label>
-    <input type="password" id="password" placeholder="6文字以上" />
-    <button id="email-login-btn">メールでログイン or 登録</button>
-    <button id="google-login">Googleでログイン</button>
-    <div class="message" id="message"></div>
+    <h1>ログイン</h1>
+    
+    <div class="section">
+      <h2>メールアドレスでログイン</h2>
+      <div class="coming-soon">メールアドレスログインは現在準備中です</div>
+    </div>
+
+    <div class="section">
+      <h2>または</h2>
+      <button id="google-login">Googleでログイン</button>
+    </div>
   </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-  import {
-    getAuth,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    signInWithPopup,
-    GoogleAuthProvider,
-  } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+  import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCBaWx8XWkZ4hByEvk861p1zP4AI73h2B0",
@@ -107,63 +94,18 @@
   const auth = getAuth(app);
   const provider = new GoogleAuthProvider();
 
-  const emailInput = document.getElementById("email");
-  const passwordInput = document.getElementById("password");
-  const messageDiv = document.getElementById("message");
-
-  function showMessage(msg, isError = true) {
-    messageDiv.textContent = msg;
-    messageDiv.style.color = isError ? "#e74c3c" : "#27ae60";
-  }
-
-  async function loginOrRegister(email, password) {
-    showMessage(""); // メッセージリセット
-    if (!email || !password) {
-      showMessage("メールアドレスとパスワードを入力してください");
-      return;
-    }
-    if (password.length < 6) {
-      showMessage("パスワードは6文字以上にしてください");
-      return;
-    }
-
-    try {
-      // ログインを試みる
-      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password.trim());
-      showMessage("ログイン成功！ページに移動します...", false);
-      setTimeout(() => { window.location.href = "mypage.html"; }, 1500);
-    } catch (loginError) {
-      if (loginError.code === "auth/user-not-found") {
-        // ユーザーがいなければ新規登録を試みる
-        try {
-          const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password.trim());
-          showMessage("新規登録成功！ページに移動します...", false);
-          setTimeout(() => { window.location.href = "mypage.html"; }, 1500);
-        } catch (registerError) {
-          showMessage("登録に失敗しました: " + registerError.message);
-        }
-      } else {
-        showMessage("ログインに失敗しました: " + loginError.message);
-      }
-    }
-  }
-
-  document.getElementById("email-login-btn").addEventListener("click", () => {
-    loginOrRegister(emailInput.value, passwordInput.value);
-  });
-
   document.getElementById("google-login").addEventListener("click", () => {
     signInWithPopup(auth, provider)
       .then(result => {
-        showMessage("Googleログイン成功！ページに移動します...", false);
-        setTimeout(() => { window.location.href = "mypage.html"; }, 1500);
+        console.log("Googleログイン成功", result.user);
+        window.location.href = "mypage.html";
       })
       .catch(error => {
-        showMessage("Googleログインに失敗しました: " + error.message);
+        alert("Googleログインに失敗しました: " + error.message);
       });
   });
 
-  // ログイン済みなら自動でマイページへ
+  // ログイン済みならマイページにリダイレクト
   auth.onAuthStateChanged(user => {
     if (user) {
       window.location.href = "mypage.html";
