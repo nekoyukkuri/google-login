@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Firebase認証デモ</title>
+</head>
+<body>
+  <h1>ログイン / 新規登録</h1>
+
+  <input id="email" type="email" placeholder="メールアドレス" /><br />
+  <input id="password" type="password" placeholder="パスワード" /><br />
+
+  <button id="signupBtn">新規登録</button>
+  <button id="loginBtn">ログイン</button>
+  <button id="googleLoginBtn">Googleでログイン</button><br />
+
+  <button id="resetBtn">パスワードリセット</button>
+
+  <script type="module">
+    import { signUp, login, loginWithGoogle, logout, resetPassword, onAuthChange } from "./auth.js";
+
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const signupBtn = document.getElementById("signupBtn");
+    const loginBtn = document.getElementById("loginBtn");
+    const googleLoginBtn = document.getElementById("googleLoginBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    signupBtn.onclick = async () => {
+      try {
+        await signUp(emailInput.value, passwordInput.value);
+      } catch (e) {
+        alert("新規登録エラー: " + e.message);
+      }
+    };
+
+    loginBtn.onclick = async () => {
+      try {
+        await login(emailInput.value, passwordInput.value);
+        location.href = "mypage.html";
+      } catch (e) {
+        alert("ログインエラー: " + e.message);
+      }
+    };
+
+    googleLoginBtn.onclick = async () => {
+      try {
+        await loginWithGoogle();
+        location.href = "mypage.html";
+      } catch (e) {
+        alert("Googleログインエラー: " + e.message);
+      }
+    };
+
+    resetBtn.onclick = async () => {
+      try {
+        if (!emailInput.value) {
+          alert("メールアドレスを入力してください");
+          return;
+        }
+        await resetPassword(emailInput.value);
+        alert("パスワードリセットメールを送信しました");
+      } catch (e) {
+        alert("リセットエラー: " + e.message);
+      }
+    };
+
+    // 認証状態が変わったらログ出力（オプション）
+    onAuthChange(user => {
+      if (user) {
+        console.log("ログイン中:", user.email);
+      } else {
+        console.log("ログアウト状態");
+      }
+    });
+  </script>
+</body>
+</html>
