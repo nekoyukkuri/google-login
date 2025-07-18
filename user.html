@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>ユーザーページ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>ユーザー情報</h1>
+  <p id="content"></p>
+
+  <script type="module">
+    import { db } from './firebase.js';
+    import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    const params = new URLSearchParams(location.search);
+    const handle = params.get("handle");
+    const content = document.getElementById('content');
+
+    if (!handle) content.textContent = "ハンドルが指定されていません";
+
+    const q = query(collection(db, "users"), where("handle", "==", handle));
+    const snap = await getDocs(q);
+    if (snap.empty) {
+      content.textContent = "ユーザーが見つかりませんでした。";
+    } else {
+      const data = snap.docs[0].data();
+      content.innerHTML = `
+        ハンドル: ${data.handle}<br>
+        作成日: ${data.createdAt.toDate().toLocaleString()}<br>
+      `;
+    }
+  </script>
+</body>
+</html>
