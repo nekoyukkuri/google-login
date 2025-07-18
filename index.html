@@ -97,4 +97,47 @@
   } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyCBaWx8XWk
+    apiKey: "AIzaSyCBaWx8XWkZ4hByEvk861p1zP4AI73h2B0",
+    authDomain: "login-56835.firebaseapp.com",
+    projectId: "login-56835",
+    storageBucket: "login-56835.appspot.com",
+    messagingSenderId: "966452989756",
+    appId: "1:966452989756:web:fa814f6e74bb0cbc3dd839"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
+
+  // メールログイン処理
+  document.getElementById("email-login").addEventListener("click", async () => {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      window.location.href = "mypage.html";
+    } catch (error) {
+      alert("ログインに失敗しました: " + error.message);
+    }
+  });
+
+  // Googleログイン処理
+  document.getElementById("google-login").addEventListener("click", async () => {
+    try {
+      await signInWithPopup(auth, provider);
+      window.location.href = "mypage.html";
+    } catch (error) {
+      alert("Googleログインに失敗しました: " + error.message);
+    }
+  });
+
+  // すでにログインしていたらマイページへ
+  onAuthStateChanged(auth, user => {
+    if (user) {
+      window.location.href = "mypage.html";
+    }
+  });
+</script>
+</body>
+</html>
