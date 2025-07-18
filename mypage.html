@@ -1,133 +1,41 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8" />
   <title>マイページ</title>
-  <style>
-    body {
-      font-family: "Helvetica Neue", Arial, sans-serif;
-      background: #f0f4f8;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .container {
-      background: white;
-      padding: 32px;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 480px;
-      text-align: center;
-    }
-    h1 {
-      margin-bottom: 16px;
-      color: #333;
-    }
-    .info {
-      text-align: left;
-      margin-bottom: 24px;
-    }
-    .info p {
-      margin: 8px 0;
-      color: #555;
-      font-size: 0.95rem;
-    }
-    button {
-      background-color: #3498db;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 12px 20px;
-      font-size: 1rem;
-      cursor: pointer;
-      margin: 6px;
-      transition: background-color 0.3s ease;
-    }
-    button:hover {
-      background-color: #2980b9;
-    }
-    button.delete {
-      background-color: #e74c3c;
-    }
-    button.delete:hover {
-      background-color: #c0392b;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <h1>マイページ</h1>
-    <div class="info" id="userInfo">
-      <p>読み込み中...</p>
-    </div>
-    <button id="logout">ログアウト</button>
-    <button id="delete" class="delete">アカウント削除</button>
-  </div>
+  <h1>マイページ</h1>
+  <p id="info"></p>
+  <a href="edit.html">ハンドル編集</a><br>
+  <button id="logout">ログアウト</button>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getAuth, signOut, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+    import { auth, db } from './firebase.js';
+    import { onAuthStateChanged, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCBaWx8XWkZ4hByEvk861p1zP4AI73h2B0",
-      authDomain: "login-56835.firebaseapp.com",
-      projectId: "login-56835",
-      storageBucket: "login-56835.appspot.com",
-      messagingSenderId: "966452989756",
-      appId: "1:966452989756:web:fa814f6e74bb0cbc3dd839"
+    const info = document.getElementById('info');
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return location.href = "index.html";
+      const docRef = doc(db, "users", user.uid);
+      const snap = await getDoc(docRef);
+      const data = snap.data();
+
+      info.innerHTML = `
+        メール: ${user.email}<br>
+        プロバイダ: ${data.provider}<br>
+        作成日: ${data.createdAt.toDate().toLocaleString()}<br>
+        ハンドル: ${data.handle}<br>
+        マイページURL: <a href="user.html?handle=${data.handle}">/user/${data.handle}</a><br>
+      `;
+    });
+
+    document.getElementById('logout').onclick = () => {
+      signOut(auth).then(() => location.href = "index.html");
     };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-
-    const userInfo = document.getElementById("userInfo");
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const providerId = user.providerData[0]?.providerId;
-        const loginMethod = providerId === "google.com" ? "Google" : "メール/パスワード";
-        const email = user.email || "(なし)";
-        const createdAt = new Date(user.metadata.creationTime).toLocaleString("ja-JP");
-        const displayName = user.displayName || "(未設定)";
-        const uid = user.uid;
-        const pageURL = `https://nekoyukkuri.github.io/mypage.html`;
-
-        userInfo.innerHTML = `
-          <p><strong>ログイン手段:</strong> ${loginMethod}</p>
-          <p><strong>メールアドレス:</strong> ${email}</p>
-          <p><strong>ハンドル名:</strong> ${displayName}</p>
-          <p><strong>アカウント作成日:</strong> ${createdAt}</p>
-          <p><strong>マイページURL:</strong> <a href="${pageURL}" target="_blank">${pageURL}</a></p>
-        `;
-      } else {
-        location.href = "index.html";
-      }
-    });
-
-    document.getElementById("logout").addEventListener("click", () => {
-      signOut(auth).then(() => {
-        location.href = "index.html";
-      });
-    });
-
-    document.getElementById("delete").addEventListener("click", () => {
-      if (confirm("本当にアカウントを削除しますか？この操作は元に戻せません。")) {
-        const user = auth.currentUser;
-        if (user) {
-          deleteUser(user).then(() => {
-            alert("アカウントを削除しました。");
-            location.href = "index.html";
-          }).catch((error) => {
-            alert("削除に失敗しました。再ログインが必要かもしれません。");
-          });
-        }
-      }
-    });
   </script>
 </body>
 </html>
