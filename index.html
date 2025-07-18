@@ -19,82 +19,36 @@
   <button id="google-login">Googleでログイン</button>
 
   <!-- Firebase SDK -->
-  <script type="module">
-    // Firebase SDKの読み込み
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import {
-      getAuth,
-      createUserWithEmailAndPassword,
-      signInWithEmailAndPassword,
-      sendPasswordResetEmail,
-      signInWithPopup,
-      GoogleAuthProvider
-    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+  import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
-    // あなたのFirebase設定（以下はダミー。自分の設定に置き換えてください）
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "login-56835.firebaseapp.com",
-      projectId: "login-56835",
-      appId: "YOUR_APP_ID"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyCBaWx8XWkZ4hByEvk861p1zP4AI73h2B0",
+    authDomain: "login-56835.firebaseapp.com",
+    projectId: "login-56835",
+    storageBucket: "login-56835.appspot.com", // ここの確認を
+    messagingSenderId: "966452989756",
+    appId: "1:966452989756:web:fa814f6e74bb0cbc3dd839",
+    measurementId: "G-9RBJHKQL7Y"
+  };
 
-    // Firebase初期化
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
 
-    // DOM取得
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-
-    // 新規登録
-    document.getElementById("signup").addEventListener("click", async () => {
-      const email = emailInput.value;
-      const password = passwordInput.value;
-      try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        alert("新規登録成功！");
+  document.getElementById("google-login").addEventListener("click", () => {
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        console.log("ログイン成功:", result.user);
         window.location.href = "mypage.html";
-      } catch (error) {
-        alert("新規登録エラー: " + error.message);
-      }
-    });
+      })
+      .catch((error) => {
+        console.error("ログイン失敗:", error);
+        alert("Googleログインエラー: " + error.message);
+      });
+  });
+</script>
 
-    // ログイン
-    document.getElementById("login").addEventListener("click", async () => {
-      const email = emailInput.value;
-      const password = passwordInput.value;
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        alert("ログイン成功！");
-        window.location.href = "mypage.html";
-      } catch (error) {
-        alert("ログインエラー: " + error.message);
-      }
-    });
-
-    // パスワードリセット
-    document.getElementById("reset").addEventListener("click", async () => {
-      const email = emailInput.value;
-      try {
-        await sendPasswordResetEmail(auth, email);
-        alert("パスワードリセットメールを送信しました");
-      } catch (error) {
-        alert("リセットエラー: " + error.message);
-      }
-    });
-
-    // Googleログイン
-    document.getElementById("google-login").addEventListener("click", async () => {
-      try {
-        await signInWithPopup(auth, provider);
-        alert("Googleログイン成功！");
-        window.location.href = "mypage.html";
-      } catch (error) {
-        alert("Googleログイン失敗: " + error.message);
-      }
-    });
-  </script>
 </body>
 </html>
