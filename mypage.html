@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>マイページ</title>
+</head>
+<body>
+  <h1>マイページ</h1>
+  <p id="userinfo">ユーザー情報読み込み中...</p>
+  <button id="logoutBtn">ログアウト</button>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    const userInfo = document.getElementById("userinfo");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          userInfo.textContent = `ようこそ！ ${data.displayName || data.email} さん`;
+        } else {
+          userInfo.textContent = `ようこそ！ ${user.email} さん`;
+        }
+      } else {
+        alert("ログインしていません。ログインページへ移動します。");
+        location.href = "index.html";
+      }
+    });
+
+    logoutBtn.onclick = async () => {
+      await signOut(auth);
+      location.href = "index.html";
+    };
+  </script>
+</body>
+</html>
