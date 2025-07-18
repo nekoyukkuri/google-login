@@ -1,85 +1,77 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ログインページ</title>
-<style>
-  body {
-    font-family: "Helvetica Neue", Arial, sans-serif;
-    background: #f0f4f8;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    height: 100vh;
-    margin: 0;
-    padding: 20px;
-  }
-  .container {
-    background: white;
-    padding: 30px 40px;
-    border-radius: 10px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    width: 350px;
-  }
-  h1 {
-    margin-bottom: 25px;
-    color: #333;
-    font-weight: 700;
-    text-align: center;
-  }
-  .section {
-    margin-bottom: 30px;
-  }
-  .section h2 {
-    font-size: 1.1rem;
-    color: #555;
-    margin-bottom: 15px;
-  }
-  .coming-soon {
-    background: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeeba;
-    padding: 10px 15px;
-    border-radius: 6px;
-    font-weight: 600;
-    text-align: center;
-  }
-  #google-login {
-    background-color: #4285F4;
-    color: white;
-    border: none;
-    width: 100%;
-    padding: 12px;
-    font-size: 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    font-weight: 600;
-  }
-  #google-login:hover {
-    background-color: #357ae8;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>マイページ</title>
+  <style>
+    body {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: white;
+      padding: 32px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 16px;
+      color: #333;
+    }
+    .info {
+      text-align: left;
+      margin-bottom: 24px;
+    }
+    .info p {
+      margin: 8px 0;
+      color: #555;
+      font-size: 0.95rem;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin: 6px;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    button.delete {
+      background-color: #e74c3c;
+    }
+    button.delete:hover {
+      background-color: #c0392b;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <h1>ログイン</h1>
-    
-    <div class="section">
-      <h2>メールアドレスでログイン</h2>
-      <div class="coming-soon">メールアドレスログインは現在準備中です</div>
+    <h1>マイページ</h1>
+    <div class="info" id="userInfo">
+      <p>読み込み中...</p>
     </div>
-
-    <div class="section">
-      <h2>または</h2>
-      <button id="google-login">Googleでログイン</button>
-    </div>
+    <button id="logout">ログアウト</button>
+    <button id="delete" class="delete">アカウント削除</button>
   </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-  import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+  import { getAuth, signOut, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCBaWx8XWkZ4hByEvk861p1zP4AI73h2B0",
@@ -92,23 +84,48 @@
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  const provider = new GoogleAuthProvider();
 
-  document.getElementById("google-login").addEventListener("click", () => {
-    signInWithPopup(auth, provider)
-      .then(result => {
-        console.log("Googleログイン成功", result.user);
-        window.location.href = "mypage.html";
-      })
-      .catch(error => {
-        alert("Googleログインに失敗しました: " + error.message);
-      });
+  const userInfo = document.getElementById("userInfo");
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      const providerId = user.providerData[0]?.providerId;
+      const loginMethod = providerId === "google.com" ? "Google" : "メール/パスワード";
+      const email = user.email || "(なし)";
+      const createdAt = new Date(user.metadata.creationTime).toLocaleString("ja-JP");
+      const displayName = user.displayName || "(未設定)";
+      const uid = user.uid;
+      const pageURL = window.location.href;
+
+      userInfo.innerHTML = `
+        <p><strong>ログイン手段:</strong> ${loginMethod}</p>
+        <p><strong>メールアドレス:</strong> ${email}</p>
+        <p><strong>ハンドル名:</strong> ${displayName}</p>
+        <p><strong>アカウント作成日:</strong> ${createdAt}</p>
+        <p><strong>マイページURL:</strong> <a href="${pageURL}" target="_blank">${pageURL}</a></p>
+      `;
+    } else {
+      location.href = "index.html";
+    }
   });
 
-  // ログイン済みならマイページにリダイレクト
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      window.location.href = "mypage.html";
+  document.getElementById("logout").addEventListener("click", () => {
+    signOut(auth).then(() => {
+      location.href = "index.html";
+    });
+  });
+
+  document.getElementById("delete").addEventListener("click", () => {
+    if (confirm("本当にアカウントを削除しますか？この操作は元に戻せません。")) {
+      const user = auth.currentUser;
+      if (user) {
+        deleteUser(user).then(() => {
+          alert("アカウントを削除しました。");
+          location.href = "index.html";
+        }).catch((error) => {
+          alert("削除に失敗しました。再ログインが必要かもしれません。");
+        });
+      }
     }
   });
 </script>
