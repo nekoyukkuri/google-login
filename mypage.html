@@ -2,40 +2,83 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>マイページ</title>
+  <style>
+    body {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      background: #e9f0f7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      background: white;
+      padding: 40px 50px;
+      border-radius: 12px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+      width: 360px;
+      text-align: center;
+    }
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 24px;
+      font-weight: 700;
+    }
+    p {
+      color: #34495e;
+      font-size: 1.1rem;
+      margin-bottom: 36px;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 14px 0;
+      width: 100%;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      font-weight: 600;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+  </style>
 </head>
 <body>
-  <h1>マイページ</h1>
-  <p id="userinfo">ユーザー情報読み込み中...</p>
-  <button id="logoutBtn">ログアウト</button>
+  <div class="container">
+    <h1>マイページへようこそ！</h1>
+    <p>ログインに成功しました。</p>
+    <button id="logout">ログアウト</button>
+  </div>
 
   <script type="module">
-    import { auth, db } from "./firebase.js";
-    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
-    const userInfo = document.getElementById("userinfo");
-    const logoutBtn = document.getElementById("logoutBtn");
-
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          userInfo.textContent = `ようこそ！ ${data.displayName || data.email} さん`;
-        } else {
-          userInfo.textContent = `ようこそ！ ${user.email} さん`;
-        }
-      } else {
-        alert("ログインしていません。ログインページへ移動します。");
-        location.href = "index.html";
-      }
-    });
-
-    logoutBtn.onclick = async () => {
-      await signOut(auth);
-      location.href = "index.html";
+    const firebaseConfig = {
+      apiKey: "AIzaSyCBaWx8XWkZ4hByEvk861p1zP4AI73h2B0",
+      authDomain: "login-56835.firebaseapp.com",
+      projectId: "login-56835",
+      storageBucket: "login-56835.appspot.com",
+      messagingSenderId: "966452989756",
+      appId: "1:966452989756:web:fa814f6e74bb0cbc3dd839",
+      measurementId: "G-9RBJHKQL7Y"
     };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    document.getElementById("logout").addEventListener("click", () => {
+      signOut(auth).then(() => {
+        window.location.href = "index.html";
+      });
+    });
   </script>
 </body>
 </html>
