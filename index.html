@@ -1,110 +1,69 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ログインページ</title>
-<style>
-  body {
-    font-family: "Helvetica Neue", Arial, sans-serif;
-    background: #f0f4f8;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    height: 100vh;
-    margin: 0;
-    padding: 20px;
-  }
-  .container {
-    background: white;
-    padding: 30px 40px;
-    border-radius: 10px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    width: 350px;
-  }
-  h1 {
-    margin-bottom: 25px;
-    color: #333;
-    font-weight: 700;
-    text-align: center;
-  }
-  .section {
-    margin-bottom: 30px;
-  }
-  .section h2 {
-    font-size: 1.1rem;
-    color: #555;
-    margin-bottom: 15px;
-  }
-  .coming-soon {
-    background: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeeba;
-    padding: 10px 15px;
-    border-radius: 6px;
-    font-weight: 600;
-    text-align: center;
-  }
-  #google-login {
-    background-color: #4285F4;
-    color: white;
-    border: none;
-    width: 100%;
-    padding: 12px;
-    font-size: 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    font-weight: 600;
-  }
-  #google-login:hover {
-    background-color: #357ae8;
-  }
-</style>
+  <meta charset="utf-8" />
+  <title>ログイン</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <h1>ログイン</h1>
-    
-    <div class="section">
-      <h2>メールアドレスでログイン</h2>
-      <div class="coming-soon">メールアドレスログインは現在実装中です</div>
-    </div>
+  <h1>ログイン</h1>
 
-    <div class="section">
-      <h2>または</h2>
-      <button id="google-login">Googleでログイン</button>
-    </div>
-  </div>
+  <button id="google-login">Googleでログイン</button>
+  <p>または</p>
+  <input type="email" id="email" placeholder="メールアドレス">
+  <input type="password" id="password" placeholder="パスワード">
+  <button id="email-login">メールでログイン</button>
+  <p id="status"></p>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-  import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+  <script type="module">
+    import { auth, provider, db } from './firebase.js';
+    import { signInWithPopup, signInWithEmailAndPassword, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+    import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCBaWx8XWkZ4hByEvk861p1zP4AI73h2B0",
-    authDomain: "login-56835.firebaseapp.com",
-    projectId: "login-56835",
-    storageBucket: "login-56835.appspot.com",
-    messagingSenderId: "966452989756",
-    appId: "1:966452989756:web:fa814f6e74bb0cbc3dd839",
-    measurementId: "G-9RBJHKQL7Y"
-  };
+    const status = document.getElementById('status');
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const provider = new GoogleAuthProvider();
+    document.getElementById('google-login').onclick = async () => {
+      try {
+        const result = await signInWithPopup(auth, provider);
+        await initUserData(result.user);
+        location.href = "mypage.html";
+      } catch (e) {
+        status.textContent = e.message;
+      }
+    };
 
-  document.getElementById("google-login").addEventListener("click", () => {
-    signInWithPopup(auth, provider)
-      .then(result => {
-        console.log("Googleログイン成功", result.user);
-        window.location.href = "mypage.html";
-      })
-      .catch(error => {
-        alert("Googleログインに失敗しました: " + error.message);
-      });
-  });
-</script>
+    document.getElementById('email-login').onclick = async () => {
+      const email = emailInput.value;
+      const password = passwordInput.value;
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        await initUserData(cred.user);
+        location.href = "mypage.html";
+      } catch (e) {
+        if (e.code === "auth/user-not-found") {
+          const cred = await createUserWithEmailAndPassword(auth, email, password);
+          await initUserData(cred.user);
+          location.href = "mypage.html";
+        } else {
+          status.textContent = e.message;
+        }
+      }
+    };
+
+    async function initUserData(user) {
+      const docRef = doc(db, "users", user.uid);
+      const snap = await getDoc(docRef);
+      if (!snap.exists()) {
+        const handle = "user-" + Math.random().toString(36).substring(2, 12);
+        await setDoc(docRef, {
+          uid: user.uid,
+          email: user.email || null,
+          provider: user.providerData[0]?.providerId || "unknown",
+          createdAt: new Date(),
+          handle
+        });
+      }
+    }
+  </script>
 </body>
 </html>
