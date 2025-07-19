@@ -2,107 +2,177 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ねこねこログインシステム</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ログインページ</title>
   <style>
     body {
-      font-family: sans-serif;
-      text-align: center;
-      padding: 2em;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      background: #f0f4f8;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      height: 100vh;
+      margin: 0;
+      padding: 20px;
     }
-    input {
+    .container {
+      background: white;
+      padding: 30px 40px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      width: 350px;
+    }
+    h1 {
+      margin-bottom: 25px;
+      color: #333;
+      font-weight: 700;
+      text-align: center;
+    }
+    input, button {
+      width: 100%;
+      margin-bottom: 12px;
       padding: 10px;
-      margin: 5px;
-      width: 250px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      font-family: inherit;
     }
     button {
-      padding: 10px 20px;
-      margin: 10px;
-      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
+      border: none;
+      color: white;
+      transition: background-color 0.3s ease;
+      user-select: none;
     }
-    .disabled {
-      opacity: 0.5;
-      pointer-events: none;
+    .btn-primary {
+      background-color: #007bff;
+    }
+    .btn-primary:hover {
+      background-color: #0056b3;
+    }
+    .btn-google {
+      background-color: #4285F4;
+      margin-top: 10px;
+    }
+    .btn-google:hover {
+      background-color: #357ae8;
+    }
+    .btn-yahoo {
+      background-color: #ff4000;
+      margin-top: 10px;
+    }
+    .btn-yahoo:hover {
+      background-color: #cc3300;
+    }
+    .notice {
+      font-size: 0.9rem;
+      color: #dc3545;
+      background: #ffe3e3;
+      padding: 8px 10px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <h1>ログインページ</h1>
+  <div class="container">
+    <h1>ログイン</h1>
 
-  <div>
-    <input type="email" id="email" placeholder="メールアドレス" />
-    <br />
-    <input type="password" id="password" placeholder="パスワード" />
-    <br />
-    <button id="loginBtn">ログイン</button>
-    <p id="emailStatus">※ メールアドレスによる新規登録は現在準備中です</p>
+    <div>
+      <h2 style="font-size: 1rem;">メールアドレスでログイン</h2>
+      <div class="notice">新規登録は停止中です。ログインのみ可能です。</div>
+      <input type="email" id="email" placeholder="メールアドレス" autocomplete="username" />
+      <input type="password" id="password" placeholder="パスワード" autocomplete="current-password" />
+      <button class="btn-primary" id="email-login">ログイン</button>
+    </div>
+
+    <div>
+      <h2 style="font-size: 1rem; margin-top: 30px;">または</h2>
+      <button class="btn-google" id="google-login">Googleでログイン</button>
+      <button class="btn-yahoo" id="yahoo-login">Yahooでログイン</button>
+    </div>
   </div>
 
-  <div>
-    <button id="googleLogin">Googleでログイン</button>
-    <br />
-    <button id="yahooLogin">Yahoo!でログイン</button>
-  </div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    signInWithPopup,
+    GoogleAuthProvider,
+    OAuthProvider,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
-  <script>
-    // Firebase 初期化
-   const firebaseConfig = {
-  apiKey: "AIzaSyCBaWx8XWkZ4hByEvk861p1zP4AI73h2B0",
-  authDomain: "login-56835.firebaseapp.com",
-  projectId: "login-56835",
-  storageBucket: "login-56835.appspot.com",
-  messagingSenderId: "966452989756",
-  appId: "1:966452989756:web:fa814f6e74bb0cbc3dd839"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyCBaWx8XWkZ4hByEvk861p1zP4AI73h2B0",
+    authDomain: "login-56835.firebaseapp.com",
+    projectId: "login-56835",
+    storageBucket: "login-56835.appspot.com",
+    messagingSenderId: "966452989756",
+    appId: "1:966452989756:web:fa814f6e74bb0cbc3dd839"
+  };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
 
-    // メールログインのみ許可（登録は不可）
-    document.getElementById("loginBtn").addEventListener("click", () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      auth.signInWithEmailAndPassword(email, password)
-        .then(user => {
-          alert("ログイン成功！");
-        })
-        .catch(error => {
-          alert("ログインに失敗しました: " + error.message);
-        });
-    });
+  const googleProvider = new GoogleAuthProvider();
+  const yahooProvider = new OAuthProvider('yahoo.jp');
 
-    // Enterキーでもログイン
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        document.getElementById("loginBtn").click();
+  // メールログイン処理
+  document.getElementById("email-login").addEventListener("click", async () => {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      window.location.href = "mypage.html";
+    } catch (error) {
+      alert("ログインに失敗しました: " + error.message);
+    }
+  });
+
+  // Googleログイン処理
+  document.getElementById("google-login").addEventListener("click", async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+      window.location.href = "mypage.html";
+    } catch (error) {
+      alert("Googleログインに失敗しました: " + error.message);
+    }
+  });
+
+  // Yahooログイン処理
+  document.getElementById("yahoo-login").addEventListener("click", async () => {
+    try {
+      await signInWithPopup(auth, yahooProvider);
+      window.location.href = "mypage.html";
+    } catch (error) {
+      alert("Yahooログインに失敗しました: " + error.message);
+    }
+  });
+
+  // すでにログインしていたらマイページへ
+  onAuthStateChanged(auth, user => {
+    if (user) {
+      window.location.href = "mypage.html";
+    }
+  });
+
+  // Enterキーでログイン処理
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      if (email && password) {
+        document.getElementById("email-login").click();
       }
-    });
+    }
+  });
+</script>
 
-    // Googleログイン
-    document.getElementById("googleLogin").addEventListener("click", () => {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider)
-        .then(result => {
-          alert("Googleログイン成功！");
-        })
-        .catch(error => {
-          alert("ログイン失敗: " + error.message);
-        });
-    });
-
-    // Yahooログイン（事前にFirebaseとYahoo連携済みであること）
-    document.getElementById("yahooLogin").addEventListener("click", () => {
-      const provider = new firebase.auth.OAuthProvider('yahoo.com');
-      auth.signInWithPopup(provider)
-        .then(result => {
-          alert("Yahoo!ログイン成功！");
-        })
-        .catch(error => {
-          alert("ログイン失敗: " + error.message);
-        });
-    });
-  </script>
 </body>
 </html>
